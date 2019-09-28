@@ -30,6 +30,7 @@ class ParseFile():
         self.Version=headFile["Version"]
         self.methodList=headFile["callMethodName"]
     def methodGraph(self,methodLine):
+        flag=True
         tempList=[]
         for method in methodLine:
             methoddic=json.loads(method)
@@ -38,9 +39,13 @@ class ParseFile():
             callMethodNameReferTo=methoddic["callMethodNameReferTo"]
             g=ParseGraph(methoddic)
             # 添加节点间关系
-            graph=g.Parse()
-            #增加节点的属性(后面会修改)
-            graph=self.addAttritude(methodname,graph)
+            graph=g.Parse1()
+
+            #=============================增加节点的属性(后面会修改)========================
+            #graph=self.addAttritude(methodname,graph)
+            #============================================================================
+
+
             singleGraph=[methodname,callMethodNameReferTo,graph]
             tempList.append(singleGraph)
         self.MethodGraph=tempList
@@ -60,14 +65,15 @@ class ParseFile():
 
     def connectFile(self):
         #将整个文件的节点连接起来
-        filel_node,filel_node_attri=self.fileName+"_"+self.Version,{"filename":self.fileName,"Version":self.Version}
-        fileGraph=nx.Graph()
-        fileGraph.add_node(filel_node,filel_node_attri)#文件根节点
+        #filel_node,filel_node_attri=self.fileName+"_"+self.Version,{"filename":self.fileName,"Version":self.Version}
+        filel_node = self.fileName
+        fileGraph=nx.DiGraph()
+        fileGraph.add_node(filel_node)#文件根节点
         for methodgraph in self.MethodGraph:
             graph=methodgraph[2]
             #从已知图的节点中构建新图
             #H.add_nodes_from(G.nodes(data=True))
-            methodNode=self.Version+"_"+methodgraph[0]
+            methodNode=methodgraph[0]
             fileGraph.add_edges_from(graph.edges(data=True))
             fileGraph.add_edge(filel_node,methodNode,{"connecting":"include"})
             print("{file}:connected! \n".format(file=methodgraph[0]))
