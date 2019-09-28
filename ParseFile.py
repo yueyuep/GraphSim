@@ -82,6 +82,8 @@ class ParseFile():
         return self.fileName
     def getVersion(self):
         return self.Version
+    def getMethodGraph(self):
+        return self.MethodGraph
 if __name__ == '__main__':
     path="F:\GraphSim\jsondata\CWE190_Integer_Overflow__int_Environment_preinc_81a.java.txt"
     file=ParseFile(path)

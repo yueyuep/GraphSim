@@ -6,6 +6,7 @@ import numpy as np
 import networkx as nx
 from collections import Iterable
 from grakel import Graph
+from grakel import GraphKernel
 def reNodeName(baseGraph,graph):
     basenodename_List=baseGraph.nodes()
     basenodename_number_List=[]
@@ -34,6 +35,42 @@ def getpairFile(basefileList,targetfileList):
                 list=[base,target]
                 pairfile.append(list)
     return pairfile
+def getpairMethodGraph(basefileList,targetfileList):
+    # {文件名：{（函数名_v1.0,函数名_v1.1）:[methodgraph1,methodgraph2.......}}
+    pairfileList=getpairFile(basefileList,targetfileList)
+    pairMethod = {}
+    for paifile in pairfileList:
+        filename=paifile[0]
+        base=paifile[0]
+        target=paifile[1]
+        baseMethodGraph=ParseFile(base)
+        targetMethodGraph=ParseFile(target)
+        baseMethodGraphList=baseMethodGraph.getMethodGraph()
+        targetMethodGraphList=targetMethodGraph.getMethodGraph()
+        #两个文件的函数数目一样的时候
+        if len(baseMethodGraphList)==len(targetMethodGraphList):
+            tempdic={}
+            for B,T in itertools.product(baseMethodGraphList,targetMethodGraphList):
+                #为对应的函数名
+                if B[0]==T[0]:
+                    filename1=B[0]+"_"+baseMethodGraph.getVersion()
+                    filename2=B[0]+"_"+targetMethodGraph.getVersion()
+                    Bgraph=B[2]
+
+                    Tgraph=T[2]
+
+                    key=(filename1,filename2)
+                    value=[Bgraph,Tgraph]
+                    tempdic[key]=value
+
+        else:
+            pass
+        pairMethod[filename]=tempdic
+    return pairMethod
+
+
+
+
 def addRoot(pairList):
     """
     #为文件添加根结点root，将两个版本对应得文件用root连接起来
@@ -103,6 +140,27 @@ def getadjlist(graph):
         edgename=[item for item in attr.values()][0]
         edge_label[(u_index,v_index)]=edgename
     return adjlist,node_name,edge_label
+def getMethodSim(pairMethodGraph):
+    sim={}
+    for filekey in pairMethodGraph.keys():
+        file=pairMethodGraph[filekey]
+        _sim={}
+        for keytupe in file.keys():
+            keytupe=tuple(keytupe)
+            method=file[keytupe]
+            basegraph=method[0]
+            targetgraph=method[1]
+            adj1, node_label1, edge_label1 = getadjlist(basegraph)
+            adj2, node_label2, edge_label2 = getadjlist(targetgraph)
+            sp_kernal = GraphKernel(kernel={"name": "shortest_path"}, normalize=True)
+            g1 = Graph(adj1, node_label1, edge_label1)
+            g2 = Graph(adj2, node_label2, edge_label2)
+            tp = sp_kernal.fit_transform([g1])
+            sim = sp_kernal.transform([g2])
+            _sim[keytupe]=sim
+        sim[file] = _sim
+
+
 
 
 
